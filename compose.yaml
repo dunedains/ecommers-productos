@@ -6,7 +6,7 @@ services:
       - APP_USER=productos_user
       - APP_USER_PASSWORD=productos_pass
     ports:
-      - '1521:1521'
+      - '1522:1521'
     volumes:
       - oracle_data:/opt/oracle/oradata
     healthcheck:
