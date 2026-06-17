@@ -7,16 +7,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.hateoas.EntityModel;
-import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
 @RequestMapping("/api/productos")
@@ -26,42 +19,29 @@ public class ProductController {
     private final ProductService service;
 
     @GetMapping
-    public ResponseEntity<PagedModel<EntityModel<ProductDto.ProductResponse>>> getAllProducts(
+    public ResponseEntity<Page<ProductDto.ProductResponse>> getAllProducts(
             @PageableDefault(size = 20) Pageable pageable) {
-        Page<ProductDto.ProductResponse> page = service.getAllProducts(pageable);
-        List<EntityModel<ProductDto.ProductResponse>> content = page.getContent().stream()
-                .map(this::toModel)
-                .toList();
-        PagedModel.PageMetadata metadata = new PagedModel.PageMetadata(
-                page.getSize(), page.getNumber(), page.getTotalElements(), page.getTotalPages());
-        return ResponseEntity.ok(PagedModel.of(content, metadata,
-                linkTo(methodOn(ProductController.class).getAllProducts(pageable)).withSelfRel()));
+        return ResponseEntity.ok(service.getAllProducts(pageable));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<EntityModel<ProductDto.ProductResponse>> getProductById(@PathVariable Long id) {
-        return ResponseEntity.ok(toModel(service.getProductById(id)));
+    public ResponseEntity<ProductDto.ProductResponse> getProductById(@PathVariable Long id) {
+        return ResponseEntity.ok(service.getProductById(id));
     }
 
     @PostMapping
-    public ResponseEntity<EntityModel<ProductDto.ProductResponse>> createProduct(@Valid @RequestBody ProductDto.ProductRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(toModel(service.createProduct(request)));
+    public ResponseEntity<ProductDto.ProductResponse> createProduct(@Valid @RequestBody ProductDto.ProductRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.createProduct(request));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<EntityModel<ProductDto.ProductResponse>> updateProduct(@PathVariable Long id, @Valid @RequestBody ProductDto.ProductRequest request) {
-        return ResponseEntity.ok(toModel(service.updateProduct(id, request)));
+    public ResponseEntity<ProductDto.ProductResponse> updateProduct(@PathVariable Long id, @Valid @RequestBody ProductDto.ProductRequest request) {
+        return ResponseEntity.ok(service.updateProduct(id, request));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         service.deleteProduct(id);
         return ResponseEntity.noContent().build();
-    }
-
-    private EntityModel<ProductDto.ProductResponse> toModel(ProductDto.ProductResponse product) {
-        return EntityModel.of(product,
-                linkTo(methodOn(ProductController.class).getProductById(product.id())).withSelfRel(),
-                linkTo(methodOn(ProductController.class).getAllProducts(null)).withRel("productos"));
     }
 }
