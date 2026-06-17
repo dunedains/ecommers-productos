@@ -7,10 +7,10 @@ import com.ecommers.productos.model.Product;
 import com.ecommers.productos.repository.ProductRepository;
 import com.ecommers.productos.service.ProductService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Slf4j
 @Service
@@ -28,9 +28,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProductDto.ProductResponse> getAllProducts() {
-        log.info("Listando todos los productos");
-        return repository.findAll().stream().map(this::toResponse).toList();
+    public Page<ProductDto.ProductResponse> getAllProducts(Pageable pageable) {
+        log.info("Listando productos pagina={} size={}", pageable.getPageNumber(), pageable.getPageSize());
+        return repository.findAll(pageable).map(this::toResponse);
     }
 
     @Override

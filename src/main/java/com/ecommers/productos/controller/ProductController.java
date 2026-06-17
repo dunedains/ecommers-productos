@@ -4,8 +4,11 @@ import com.ecommers.productos.dto.ProductDto;
 import com.ecommers.productos.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.hateoas.CollectionModel;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,12 +26,16 @@ public class ProductController {
     private final ProductService service;
 
     @GetMapping
-    public ResponseEntity<CollectionModel<EntityModel<ProductDto.ProductResponse>>> getAllProducts() {
-        List<EntityModel<ProductDto.ProductResponse>> products = service.getAllProducts().stream()
+    public ResponseEntity<PagedModel<EntityModel<ProductDto.ProductResponse>>> getAllProducts(
+            @PageableDefault(size = 20) Pageable pageable) {
+        Page<ProductDto.ProductResponse> page = service.getAllProducts(pageable);
+        List<EntityModel<ProductDto.ProductResponse>> content = page.getContent().stream()
                 .map(this::toModel)
                 .toList();
-        return ResponseEntity.ok(CollectionModel.of(products,
-                linkTo(methodOn(ProductController.class).getAllProducts()).withSelfRel()));
+        PagedModel.PageMetadata metadata = new PagedModel.PageMetadata(
+                page.getSize(), page.getNumber(), page.getTotalElements(), page.getTotalPages());
+        return ResponseEntity.ok(PagedModel.of(content, metadata,
+                linkTo(methodOn(ProductController.class).getAllProducts(pageable)).withSelfRel()));
     }
 
     @GetMapping("/{id}")
@@ -55,6 +62,6 @@ public class ProductController {
     private EntityModel<ProductDto.ProductResponse> toModel(ProductDto.ProductResponse product) {
         return EntityModel.of(product,
                 linkTo(methodOn(ProductController.class).getProductById(product.id())).withSelfRel(),
-                linkTo(methodOn(ProductController.class).getAllProducts()).withRel("productos"));
+                linkTo(methodOn(ProductController.class).getAllProducts(null)).withRel("productos"));
     }
 }
